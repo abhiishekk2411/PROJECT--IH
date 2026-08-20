@@ -7,12 +7,22 @@ const WeatherCard = ({ weather }) => {
   const { t } = useTranslation();
   if (!weather) return null;
 
-  const getDayTranslation = (day) => {
-    const d = day.toLowerCase();
-    if (d === 'today') return t('weather.today');
-    if (d === 'tomorrow') return t('weather.tomorrow');
-    if (d === 'day after' || d === 'dayafter') return t('weather.dayAfter');
-    return day;
+  if (weather.available === false) {
+    return (
+      <div className="card p-5">
+        <h3 className="text-2xl font-bold text-surface-900 mb-4">मौसम</h3>
+        <p className="text-lg text-surface-600">मौसम की जानकारी अभी उपलब्ध नहीं है।</p>
+      </div>
+    );
+  }
+
+  const getRiskTranslation = (level) => {
+    switch(level) {
+      case 'low': return 'कम';
+      case 'moderate': return 'मध्यम';
+      case 'high': return 'ज़्यादा';
+      default: return 'उपलब्ध नहीं';
+    }
   };
 
   return (
@@ -23,32 +33,25 @@ const WeatherCard = ({ weather }) => {
             <CloudRain className="w-6 h-6 text-blue-500" />
           </div>
           <div>
-            <h3 className="text-2xl font-bold text-surface-900">{t('weather.title')}</h3>
-            <div className="flex items-center text-base text-surface-500">
-              <MapPin className="w-4 h-4 mr-1" />
-              <span>{weather.location || 'Local Area'}</span>
-              {weather.condition && (
-                <>
-                  <span className="mx-2">•</span>
-                  <span>{t('conditions.' + weather.condition)}</span>
-                </>
-              )}
-            </div>
+            <h3 className="text-2xl font-bold text-surface-900">मौसम</h3>
           </div>
         </div>
-        <RiskBadge level={weather.riskLevel} />
+        <div className="text-right">
+          <span className="text-sm text-surface-500 block mb-1">मौसम जोखिम</span>
+          <RiskBadge level={weather.riskLevel} label={getRiskTranslation(weather.riskLevel)} />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-5">
         <div className="bg-surface-50 p-3 rounded-lg flex items-center justify-between">
           <div className="flex items-center text-surface-600 text-base">
-            <Thermometer className="w-5 h-5 mr-1.5" /> {t('weather.temperature')}
+            <Thermometer className="w-5 h-5 mr-1.5" /> तापमान
           </div>
           <span className="font-bold text-xl text-surface-900">{weather.temperature}°C</span>
         </div>
         <div className="bg-surface-50 p-3 rounded-lg flex flex-col justify-center">
           <div className="flex justify-between text-base mb-1">
-            <span className="text-surface-600">{t('weather.rainProbability')}</span>
+            <span className="text-surface-600">बारिश की संभावना</span>
             <span className="font-bold text-surface-900">{weather.rainProbability}%</span>
           </div>
           <div className="w-full bg-surface-200 rounded-full h-1.5">
@@ -62,30 +65,17 @@ const WeatherCard = ({ weather }) => {
           </div>
         </div>
       </div>
-
-      {weather.warning && (
-        <div className="mb-5 p-3 bg-yellow-50 text-yellow-800 text-base rounded-md border border-yellow-100 flex items-start">
-           <CloudRain className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
-           <p>{weather.warning}</p>
+      
+      <div className="grid grid-cols-2 gap-4 mb-2">
+        <div className="p-3 bg-surface-50 rounded-lg">
+          <p className="text-sm text-surface-600">अनुमानित बारिश</p>
+          <p className="font-bold text-surface-900">{weather.rainMm} mm</p>
         </div>
-      )}
-
-      {weather.forecast && weather.forecast.length > 0 && (
-        <div>
-          <p className="text-sm font-semibold text-surface-500 uppercase tracking-wider mb-2">{t('weather.forecast')}</p>
-          <div className="grid grid-cols-3 gap-2">
-            {weather.forecast.map((day, index) => (
-              <div key={index} className="text-center p-2 rounded bg-surface-50">
-                <p className="text-sm text-surface-500 mb-1">{getDayTranslation(day.day)}</p>
-                <div className="flex justify-center mb-1">
-                  {day.rain > 50 ? <CloudRain className="w-5 h-5 text-blue-500" /> : <Thermometer className="w-5 h-5 text-orange-400" />}
-                </div>
-                <p className="text-base font-medium">{day.rain}%</p>
-              </div>
-            ))}
-          </div>
+        <div className="p-3 bg-surface-50 rounded-lg">
+          <p className="text-sm text-surface-600">फसल की संवेदनशीलता</p>
+          <p className="font-bold text-surface-900 capitalize">{getRiskTranslation(weather.cropPerishability)}</p>
         </div>
-      )}
+      </div>
     </div>
   );
 };

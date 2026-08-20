@@ -1,33 +1,32 @@
 import React from 'react';
+import { ShieldAlert, ShieldCheck, Shield } from 'lucide-react';
 import { useTranslation } from '../i18n';
 
-const RiskBadge = ({ level }) => {
+const RiskBadge = ({ level, label }) => {
   const { t } = useTranslation();
   if (!level) return null;
 
-  let badgeClass = 'badge-gray';
-  let dotClass = 'bg-gray-400';
-
   const normalizedLevel = level.toLowerCase();
 
-  if (normalizedLevel === 'low') {
-    badgeClass = 'badge-primary';
-    dotClass = 'bg-green-500';
-  } else if (normalizedLevel === 'moderate') {
-    badgeClass = 'badge-surface';
-    dotClass = 'bg-yellow-500';
-  } else if (normalizedLevel === 'high') {
-    badgeClass = 'badge-danger';
-    dotClass = 'bg-danger-500';
+  if (normalizedLevel === 'high') {
+    return (
+      <span className="badge badge-danger text-sm flex items-center gap-1 w-max">
+        <ShieldAlert size={16} /> {label || t('common.high')}
+      </span>
+    );
   }
-
-  // Handle translation if present in en.js
-  const displayLevel = t(`common.${level}`) !== `common.${level}` ? t(`common.${level}`) : level;
-
+  
+  if (normalizedLevel === 'moderate') {
+    return (
+      <span className="badge badge-warning text-sm flex items-center gap-1 w-max">
+        <Shield size={16} /> {label || t('common.moderate')}
+      </span>
+    );
+  }
+  
   return (
-    <span className={`badge ${badgeClass} inline-flex items-center`}>
-      <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${dotClass}`}></span>
-      {displayLevel}
+    <span className="badge badge-success text-sm flex items-center gap-1 w-max">
+      <ShieldCheck size={16} /> {label || t('common.low')}
     </span>
   );
 };

@@ -86,7 +86,8 @@ const en = {
     varietyPlaceholder: 'e.g. Desi',
     quantityPlaceholder: 'Enter amount',
     analyzeCrop: 'Analyze Crop',
-    analyzeNote: 'Your recommendation will consider market price, distance, transport cost, trends and risk.',
+    analyzeNote: 'Analysis uses the latest market rates, weather data, and other insights.',
+    imageInput: '📷 Take a Photo',
   },
 
   // --- Results Page ---
@@ -216,6 +217,45 @@ const en = {
     msg4: 'I recommend selling now. There is moderate rain risk in the next 48 hours which could affect transport and market conditions. The price trend at Pimpalgaon is increasing, but waiting carries weather-related risk. Selling now at Pimpalgaon Mandi gives you the best balance of return and safety.',
   },
 
+  // --- Tags and Explanations ---
+  tags: {
+    sell_now: 'It is better to sell now',
+    wait: 'It might be better to wait a little',
+    weather_risk_high: 'Rain risk is high',
+    weather_risk_moderate: 'Rain risk is moderate',
+    weather_risk_low: 'Weather is clear',
+    weather_data_unavailable: 'Weather information is currently unavailable',
+    price_trend_increasing: 'Prices are increasing at this mandi',
+    price_trend_decreasing: 'Prices are decreasing at this mandi',
+    price_trend_stable: 'Prices are stable at this mandi',
+    better_net_return: 'Your net return is higher if you sell here',
+    weather_supports_early_sale: 'Given the weather risk, it is safer to sell early'
+  },
+
+  ux: {
+    bestMandiHeading: 'The Best Mandi for You',
+    netReturnDesc: 'After deducting all transport costs and potential weather risks',
+    approximateReturn: 'Selling here can give you an approximate net return of',
+    approximateReturnEnd: '',
+    ourAdvice: 'Our Advice',
+    sellNowReason: 'Considering the weather risk, falling prices, or better immediate returns, it is safer to sell now.',
+    waitReason: 'Considering the potential for higher prices and low weather risk, waiting might be better.',
+    whyThisMandi: 'Why is this mandi better for you?',
+    moneyBreakdownTitle: 'How did we calculate your earnings?',
+    cropAmount: 'Crop Quantity',
+    totalSale: 'Total Sale',
+    trendPastDays: 'Mandi Prices over the Last 30 Days',
+    trendIncreasingExp: 'Prices have been increasing over the last few days.',
+    trendDecreasingExp: 'Prices have been decreasing over the last few days.',
+    trendStableExp: 'Prices have been relatively stable over the last few days.',
+    weatherHighExp: 'There is a high chance of rain in the next 24 hours. Delaying your sale increases the risk of crop damage.',
+    weatherModerateExp: 'There is some chance of rain. It would be wise to consider the weather in your selling decision.',
+    weatherLowExp: 'There is currently no significant weather risk for selling your crop.',
+    rankBest: 'Best Option',
+    rankGood: 'Good Option',
+    rankLow: 'Lower Profit'
+  },
+
   suggestions: {
     bestMandi: 'Best mandi for my crop',
     sellNow: 'Should I sell now?',
@@ -253,9 +293,47 @@ const en = {
 
   // --- Voice Input ---
   voice: {
-    tapToSpeak: 'Tap to speak your crop details',
-    comingSoon: 'Voice input coming soon',
+    tapToSpeak: '🎤 Tap microphone and speak',
+    listening: '🔴 Listening... speak now',
+    processing: 'Processing speech...',
+    success: '✓ Information extracted. Please review.',
+    error: 'Could not understand. Please try again.',
+    unsupported: 'Voice input is not supported in this browser. Please type manually.',
+    permissionDenied: 'Microphone permission denied. Please allow microphone access.',
+    missingCrop: 'Could not detect crop. Please mention your crop.',
+    missingLocation: 'Could not detect location. Please mention your city.',
+    missingQuantity: 'Could not detect quantity. Please speak clearly, e.g. "I have 800 kg tomato."',
+    example: 'Example: "I have 800 kg hybrid tomato and I live in Nashik"'
   },
+
+  // --- Image Input ---
+  imageInput: {
+    title: 'Take a photo of your crop',
+    subtitle: 'Take a clear photo or select one from your gallery.',
+    camera: '📷 Open Camera',
+    choose: '🖼️ Choose Photo',
+    change: 'Change Photo',
+    remove: 'Remove Photo',
+    ready: 'Photo Ready',
+    guidanceTitle: 'For a good photo:',
+    guidance1: 'Ensure the crop is clearly visible',
+    guidance2: 'Ensure adequate lighting',
+    guidance3: 'Show the entire plant/fruit part',
+    guidance4: 'Ensure the photo is not blurry',
+    notAnalyzed: 'Automatic crop detection is currently disabled. Please confirm your crop details below.',
+    errorInvalid: 'Invalid file. Please select a JPG or PNG image.',
+    errorLarge: 'Photo is too large. Please select a smaller photo.'
+  },
+
+  // --- TTS Voice ---
+  tts: {
+    listenRecommendation: '🔊 Listen to Recommendation',
+    stopListening: '⏹️ Stop',
+    speechIntro: 'The best market for you is {{mandi}}.',
+    speechReturn: 'Selling here could give you an approximate net return of {{amount}} rupees.',
+    speechAdvice: 'Our advice is to {{advice}}.',
+    speechWeather: 'Regarding weather, {{weather}}.'
+  }
 };
 
 export default en;

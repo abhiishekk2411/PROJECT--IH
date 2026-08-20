@@ -1,16 +1,73 @@
-import React from 'react';
-import { IndianRupee, MapPin, Truck, TrendingUp, CloudRain, Clock, Image as ImageIcon } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { IndianRupee, MapPin, Truck, TrendingUp, CloudRain, Clock, Image as ImageIcon, AlertCircle } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
 import RecommendationCard from '../components/RecommendationCard';
 import MetricCard from '../components/MetricCard';
 import MandiComparison from '../components/MandiComparison';
 import TrendChart from '../components/TrendChart';
 import WeatherCard from '../components/WeatherCard';
-import { recommendation, mandiList, priceHistory, weatherData } from '../data/mockData';
+import { getMarketTrend } from '../services/decisionService';
 import { useTranslation } from '../i18n';
 
 export default function Results() {
   const { t } = useTranslation();
+
+  const location = useLocation();
+  const navigate = useNavigate();
+  const decision = location.state?.decision;
+
+  const [trendData, setTrendData] = useState(null);
+  const [trendError, setTrendError] = useState(false);
+
+  useEffect(() => {
+    if (decision && decision.rankedMandis && decision.rankedMandis.length > 0) {
+      const fetchTrend = async () => {
+        try {
+          const bestMandi = decision.rankedMandis.find(m => m.mandiId === decision.bestMandi) || decision.rankedMandis[0];
+          const result = await getMarketTrend(bestMandi.cropId || "tomato", bestMandi.mandiId, bestMandi.varietyId || "hybrid", 30);
+          setTrendData(result);
+        } catch (err) {
+          console.error("Failed to fetch trend:", err);
+          setTrendError(true);
+        }
+      };
+      fetchTrend();
+    }
+  }, [decision]);
+
+  if (!decision) {
+    return (
+      <div className="page-container flex flex-col items-center justify-center min-h-[60vh] space-y-6">
+        <AlertCircle size={64} className="text-surface-400" />
+        <h2 className="text-2xl font-bold text-surface-700">विश्लेषण का डेटा नहीं मिला</h2>
+        <button onClick={() => navigate('/analyze')} className="btn btn-primary btn-lg">
+          फसल का दोबारा विश्लेषण करें
+        </button>
+      </div>
+    );
+  }
+
+  const bestMandiId = decision.bestMandi;
+  const bestMandi = decision.rankedMandis.find(m => m.mandiId === bestMandiId) || decision.rankedMandis[0];
+
+  // Map backend tags to Hindi strings
+  const tagTranslations = {
+    "weather_risk_high": "बारिश का जोखिम ज़्यादा है",
+    "weather_risk_moderate": "बारिश का मध्यम जोखिम है",
+    "weather_risk_low": "मौसम साफ है",
+    "price_trend_decreasing": "मंडी भाव नीचे जा रहा है",
+    "price_trend_increasing": "मंडी भाव बढ़ रहा है",
+    "price_trend_stable": "मंडी भाव स्थिर है",
+    "better_net_return": "इस मंडी में शुद्ध कमाई बेहतर है",
+    "weather_supports_early_sale": "मौसम को देखते हुए जल्दी बेचना बेहतर है",
+    "weather_data_unavailable": "मौसम की जानकारी उपलब्ध नहीं है"
+  };
+
+  const getReasoningText = () => {
+    if (!decision.reasoningTags) return "";
+    return decision.reasoningTags.map(tag => tagTranslations[tag] || tag).join(" • ");
+  };
 
   return (
     <div className="page-container space-y-8 animate-slide-up">
@@ -20,77 +77,44 @@ export default function Results() {
       />
 
       {/* Recommendation Banner */}
-      <RecommendationCard recommendation={recommendation} />
-
-      {/* Key Metrics Row */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        <MetricCard 
-          icon={IndianRupee} 
-          label={t('common.currentPrice')} 
-          value={`₹${(24).toLocaleString('en-IN')}/kg`} 
-          subtext={t('mandis.pimpalgaon')} 
-        />
-        <MetricCard 
-          icon={MapPin} 
-          label={t('common.distance')} 
-          value={`${(32).toLocaleString('en-IN')} km`} 
-          trend="neutral" 
-        />
-        <MetricCard 
-          icon={Truck} 
-          label={t('common.transportCost')} 
-          value={`₹${(1080).toLocaleString('en-IN')}`} 
-        />
-        <MetricCard 
-          icon={TrendingUp} 
-          label={t('common.priceTrend')} 
-          value={`↑ ${t('common.increasing')}`}
-          subtext={`+4.2% ${t('common.thisWeek')}`} 
-          trend="up" 
-        />
-        <MetricCard 
-          icon={CloudRain} 
-          label={t('common.weatherRisk')} 
-          value={t('common.moderate')} 
-          subtext={`65% ${t('common.rainProbability')}`} 
-        />
-      </div>
+      <RecommendationCard 
+        mandi={bestMandi} 
+        tags={decision.reasoningTags} 
+        weather={decision.weather} 
+      />
 
       {/* Mandi Comparison */}
       <div>
-        <h2 className="section-title mb-4">{t('results.mandiComparison')}</h2>
-        <MandiComparison mandis={mandiList} />
+        <h2 className="section-title mb-4">आसपास की मंडियों की तुलना</h2>
+        <MandiComparison mandis={decision.rankedMandis} bestMandiId={bestMandiId} />
       </div>
 
-      {/* Two-column layout: Trend & Decision */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="card p-6">
-          <TrendChart data={priceHistory} title={t('trend.historicalPriceTrend')} />
-          <div className="mt-4 pt-4 border-t border-surface-200">
-            <p className="font-semibold text-2xl">{t('results.estimatedPriceRange')}: ₹{(23).toLocaleString('en-IN')}–₹{(26).toLocaleString('en-IN')}/kg</p>
-            <p className="text-base text-surface-500 mt-1">{t('results.priceRangeDisclaimer')}</p>
+      {/* Trend Section */}
+      <div className="card p-6 md:p-8">
+        <h3 className="text-2xl font-bold text-surface-900 mb-6">{t('ux.trendPastDays')}</h3>
+        {trendData && trendData.priceHistory ? (
+          <>
+            <p className="text-lg text-surface-700 leading-relaxed mb-6">
+              {bestMandi.trend === 'increasing' ? t('ux.trendIncreasingExp') : bestMandi.trend === 'decreasing' ? t('ux.trendDecreasingExp') : t('ux.trendStableExp')}
+            </p>
+            <TrendChart data={trendData.priceHistory} title="" />
+            <div className="mt-4 pt-4 border-t border-surface-200">
+              <p className="font-semibold text-xl">अनुमानित भाव: ₹{(trendData.estimatedRange.min).toLocaleString('hi-IN')}–₹{(trendData.estimatedRange.max).toLocaleString('hi-IN')}/kg</p>
+            </div>
+          </>
+        ) : trendError ? (
+          <div className="flex items-center justify-center h-32 bg-surface-50 rounded-lg text-surface-500 text-lg">
+            मंडी भाव का पुराना रिकॉर्ड अभी उपलब्ध नहीं है।
           </div>
-        </div>
-
-        <div className="card p-6 flex flex-col justify-center">
-          <div className="flex items-center gap-3 mb-4">
-            <Clock className="text-primary-600" size={28} />
-            <h3 className="text-xl font-bold">{t('results.sellNowOrWait')}</h3>
+        ) : (
+          <div className="flex items-center justify-center h-32 bg-surface-50 rounded-lg text-surface-500 text-lg">
+            डेटा लोड हो रहा है...
           </div>
-          <div className="mb-6">
-            <span className={`badge px-4 py-2 text-xl ${recommendation.sellNowVsWait === 'sellNow' ? 'badge-primary' : 'badge-surface'}`}>
-              {t('common.' + recommendation.sellNowVsWait)}
-            </span>
-          </div>
-          <p className="text-surface-700 text-lg leading-relaxed">
-            {recommendation.sellNowReason}
-          </p>
-        </div>
+        )}
       </div>
 
-      {/* Two-column layout: Weather & Quality */}
+      {/* Image Quality layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <WeatherCard weather={weatherData} />
 
         <div className="card p-6">
           <h3 className="text-xl font-bold mb-4">{t('results.cropImageAssessment')}</h3>

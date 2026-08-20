@@ -40,8 +40,8 @@ const MetricCard = ({ icon: Icon, label, value, subtext, trend, className = '' }
         <Icon className="w-6 h-6 text-primary-600" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="metric-label truncate">{label}</p>
-        <p className="metric-value truncate">{value}</p>
+        <p className="metric-label break-words">{label}</p>
+        <p className="metric-value break-words">{value}</p>
         {subtext && <p className="text-base text-surface-500 mt-1">{subtext}</p>}
         {renderTrend()}
       </div>

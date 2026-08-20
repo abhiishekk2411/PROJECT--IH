@@ -27,7 +27,7 @@ const CropSummaryCard = ({ crop }) => {
         <div className="flex items-center text-surface-700">
           <MapPin className="w-5 h-5 mr-2 text-surface-400" />
           <span className="font-medium mr-2">{t('cropSummary.location')}:</span>
-          <span className="truncate">{crop.location}</span>
+          <span>{crop.location}</span>
         </div>
         {crop.harvestDate && (
            <div className="flex items-center text-surface-700">

@@ -1,0 +1,26 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "This folder will contain the Node.js + Express.js backend.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "seed": "node scripts/seedDatabase.js",
+    "test-engine": "node scripts/testEngine.js",
+    "test-trend": "node scripts/testTrend.js",
+    "test-distance": "node scripts/testDistance.js",
+    "test-transport": "node scripts/testTransport.js",
+    "test-weatherrisk": "node scripts/testWeatherRisk.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "mongoose": "^9.9.3"
+  }
+}

@@ -5,42 +5,51 @@
 // Currently returns mock data. Replace with backend calls when ready.
 // ============================================================================
 
-import { recommendation, weatherData, mandiList } from '../data/mockData';
+import { apiRequest } from './api';
 
 /**
  * Analyze crop and get the full decision recommendation.
- * This is the primary API call that triggers the Decision Engine on the backend.
- * TODO: Replace with POST /api/decision/analyze
- * @param {Object} cropData - { crop, variety, quantity, unit, location, imageFile }
+ * Triggers the Decision Engine on the backend.
+ * @param {Object} cropData - { crop, variety, quantity, unit, location }
  * @returns {Object} Full recommendation with ranked mandis, explanation, weather, etc.
  */
 export async function analyzeDecision(cropData) {
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-  return {
-    recommendation,
-    rankedMandis: mandiList,
-    weather: weatherData,
+  const payload = {
+    cropId: cropData.crop.toLowerCase(),
+    varietyId: cropData.variety.toLowerCase(),
+    quantityKg: Number(cropData.quantity),
+    location: cropData.location
   };
+
+  const response = await apiRequest('/decision/analyze', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+
+  return response.data;
 }
 
 /**
- * Get weather risk for a location.
- * TODO: Replace with GET /api/weather?location=Nashik
- * @param {string} location
- * @returns {Object} Weather data with risk assessment
+ * Get historical price trend for a specific market and crop.
+ * @param {string} cropId
+ * @param {string} mandiId
+ * @param {string} varietyId
+ * @param {number} days
+ * @returns {Object} Trend data including priceHistory
  */
-export async function getWeather(location) {
-  await new Promise((resolve) => setTimeout(resolve, 300));
-  return weatherData;
+export async function getMarketTrend(cropId, mandiId, varietyId, days = 30) {
+  const queryParams = new URLSearchParams({
+    crop: cropId.toLowerCase(),
+    mandi: mandiId.toLowerCase(),
+    variety: varietyId.toLowerCase(),
+    days: days.toString()
+  });
+
+  const response = await apiRequest(`/markets/trend?${queryParams.toString()}`, {
+    method: 'GET'
+  });
+
+  return response.data;
 }
 
-/**
- * Get a specific past decision by ID.
- * TODO: Replace with GET /api/decisions/:id
- * @param {string} decisionId
- * @returns {Object} Decision details
- */
-export async function getDecision(decisionId) {
-  await new Promise((resolve) => setTimeout(resolve, 200));
-  return recommendation;
-}
+
