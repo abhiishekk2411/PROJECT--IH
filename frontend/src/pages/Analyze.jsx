@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Keyboard, Mic, Camera, MapPin } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
@@ -22,6 +22,19 @@ export default function Analyze() {
   const [isImageSelected, setIsImageSelected] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [isImageConfirmed, setIsImageConfirmed] = useState(false);
+
+  useEffect(() => {
+    // Clear stale image analysis data when starting a new analysis flow
+    sessionStorage.removeItem('fasalnirnay_image_analysis');
+  }, []);
+
+  const handleModeChange = (mode) => {
+    setInputMode(mode);
+    if (mode !== 'image') {
+      sessionStorage.removeItem('fasalnirnay_image_analysis');
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -49,7 +62,8 @@ export default function Analyze() {
     } catch (err) {
       console.error("Analysis Failed:", err);
       // 5. Handle error gracefully
-      setErrorMsg('सर्वर से जानकारी नहीं मिल पा रही है। कृपया कुछ देर बाद फिर कोशिश करें।');
+      const message = err.message || 'सर्वर से जानकारी नहीं मिल पा रही है। कृपया कुछ देर बाद फिर कोशिश करें।';
+      setErrorMsg(message);
     } finally {
       setIsAnalyzing(false);
     }
@@ -138,21 +152,21 @@ export default function Analyze() {
         <div className="flex flex-col sm:flex-row bg-surface-100 p-1.5 rounded-xl mb-8 gap-1.5">
           <button 
             className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium text-lg transition-all ${inputMode === 'type' ? 'bg-white shadow-md text-primary-700' : 'text-surface-600 hover:bg-surface-200'}`}
-            onClick={() => setInputMode('type')}
+            onClick={() => handleModeChange('type')}
           >
             <Keyboard size={20} />
             {t('analyze.typeDetails')}
           </button>
           <button 
             className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium text-lg transition-all ${inputMode === 'voice' ? 'bg-white shadow-md text-primary-700' : 'text-surface-600 hover:bg-surface-200'}`}
-            onClick={() => setInputMode('voice')}
+            onClick={() => handleModeChange('voice')}
           >
             <Mic size={20} />
             {t('analyze.voiceInput')}
           </button>
           <button 
             className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium text-lg transition-all ${inputMode === 'image' ? 'bg-white shadow-md text-primary-700' : 'text-surface-600 hover:bg-surface-200'}`}
-            onClick={() => setInputMode('image')}
+            onClick={() => { handleModeChange('image'); setIsImageConfirmed(false); setIsImageSelected(false); }}
           >
             <Camera size={20} />
             {t('analyze.imageInput') || 'फोटो लें'}
@@ -184,9 +198,24 @@ export default function Analyze() {
 
           {inputMode === 'image' && (
             <div className="py-2 space-y-8">
-              <ImageInput onImageSelect={(file) => setIsImageSelected(!!file)} />
+              <ImageInput 
+                onImageSelect={(file) => {
+                  setIsImageSelected(!!file);
+                  setIsImageConfirmed(false);
+                }} 
+                onCropDetected={(data) => {
+                  setIsImageConfirmed(true);
+                  if (data) {
+                    setFormData(prev => ({
+                      ...prev,
+                      crop: data.cropId || prev.crop,
+                      variety: data.varietyId || prev.variety
+                    }));
+                  }
+                }}
+              />
               
-              {isImageSelected && (
+              {isImageSelected && isImageConfirmed && (
                 <div className="pt-8 border-t-2 border-surface-200 mt-8 animate-fade-in">
                   {renderManualForm()}
                 </div>
@@ -195,7 +224,7 @@ export default function Analyze() {
           )}
 
           {/* Action Area */}
-          {(inputMode === 'type' || (inputMode === 'image' && isImageSelected)) && (
+          {(inputMode === 'type' || (inputMode === 'image' && isImageSelected && isImageConfirmed)) && (
             <div className="mt-8 pt-8 border-t-2 border-surface-200">
               {errorMsg && (
                 <div className="mb-6 p-4 bg-danger-50 text-danger-700 rounded-lg text-center font-semibold text-lg border border-danger-100">

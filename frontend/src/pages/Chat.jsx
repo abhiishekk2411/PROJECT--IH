@@ -29,7 +29,7 @@ export default function Chat() {
     setIsTyping(true);
 
     try {
-      const response = await sendChatMessage(userMsg, updatedMessages);
+      const response = await sendChatMessage(text, updatedMessages);
       setMessages([...updatedMessages, response]);
     } catch (error) {
       console.error("Chat error:", error);

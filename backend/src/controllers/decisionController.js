@@ -7,6 +7,7 @@ const { calculateTransportCost } = require('../services/decision/transportServic
 const { getWeatherForecast } = require('../services/weather/weatherService');
 const { calculateWeatherRisk } = require('../services/weather/weatherRiskService');
 const MarketPrice = require('../models/MarketPrice');
+const DecisionHistory = require('../models/DecisionHistory');
 
 // @desc    Analyze crop selling decision
 // @route   POST /api/decision/analyze
@@ -15,15 +16,24 @@ const analyzeDecision = async (req, res, next) => {
   try {
     const { cropId, varietyId, quantityKg, location } = req.body;
 
-    if (!cropId || !varietyId || !quantityKg || !location) {
+    if (!cropId || !varietyId || quantityKg == null || !location) {
       res.status(400);
-      throw new Error('Missing required fields: cropId, varietyId, quantityKg, location');
+      throw new Error('कृपया फसल, किस्म, मात्रा और स्थान की जानकारी भरें।');
     }
 
-    if (quantityKg <= 0) {
+    if (location.trim() === '') {
       res.status(400);
-      throw new Error('Quantity must be greater than zero');
+      throw new Error('स्थान की जानकारी खाली नहीं हो सकती।');
     }
+
+    const numericQuantity = parseFloat(quantityKg);
+    if (isNaN(numericQuantity) || numericQuantity <= 0) {
+      res.status(400);
+      throw new Error('मात्रा एक सही संख्या होनी चाहिए और 0 से अधिक होनी चाहिए।');
+    }
+    
+    // Override quantity with clean parsed value
+    req.body.quantityKg = numericQuantity;
 
     // 1. Geocode farmer location
     let farmerCoords;
@@ -43,7 +53,7 @@ const analyzeDecision = async (req, res, next) => {
 
     if (!marketData || marketData.length === 0) {
       res.status(404);
-      throw new Error(`No market data found for crop: ${cropId} near ${location}`);
+      throw new Error(`इस फसल के लिए वर्तमान में आसपास की मंडियों का भाव उपलब्ध नहीं है। कृपया अन्य फसल चुनें। (No market data found for this crop)`);
     }
 
     // 4. Process each mandi: Distance, Transport, Trend, Risk
@@ -67,15 +77,22 @@ const analyzeDecision = async (req, res, next) => {
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - 30);
 
-      const historicalPrices = await MarketPrice.find({
-        cropId: cropId.toLowerCase(),
-        mandiId: m.mandiId.toLowerCase(),
-        varietyId: varietyId.toLowerCase(),
-        date: { $gte: startDate }
-      }).sort({ date: 1 }).lean();
+      let historicalPrices = [];
+      try {
+        if (mongoose.connection.readyState === 1) {
+          historicalPrices = await MarketPrice.find({
+            cropId: cropId.toLowerCase(),
+            mandiId: m.mandiId.toLowerCase(),
+            varietyId: varietyId.toLowerCase(),
+            date: { $gte: startDate }
+          }).sort({ date: 1 }).lean();
+        }
+      } catch (histErr) {
+        console.warn("Historical prices query warning:", histErr.message);
+      }
 
       let trendData = { trend: 'stable', percentageChange: 0, estimatedRange: { min: m.price, max: m.price } };
-      if (historicalPrices.length > 0) {
+      if (historicalPrices && historicalPrices.length > 0) {
         const calculatedTrend = trendService.calculateTrend(historicalPrices);
         trendData = {
           trend: calculatedTrend.trend,
@@ -103,7 +120,38 @@ const analyzeDecision = async (req, res, next) => {
       weatherRisk // Pass weather risk to engine for reasoning tags
     });
 
-    // 6. Return structured JSON
+    // 6. Save Decision to History (Non-blocking)
+    try {
+      const bestMandiId = decisionResult.bestMandi;
+      const bestMandi = decisionResult.rankedMandis.find(m => m.mandiId === bestMandiId) || decisionResult.rankedMandis[0];
+      
+      if (bestMandi && mongoose.connection.readyState === 1) {
+        await DecisionHistory.create({
+          userId: 'demo_farmer_001', // Future proofing for auth
+          cropId: cropId,
+          varietyId: varietyId,
+          quantityKg: quantityKg,
+          farmerLocation: location,
+          selectedMandiId: bestMandi.mandiId,
+          selectedMandiName: bestMandi.mandiName,
+          selectedMandiPrice: bestMandi.price,
+          expectedRevenue: bestMandi.expectedRevenue,
+          transportCost: bestMandi.transportCost,
+          riskPenalty: bestMandi.riskPenalty,
+          expectedNetReturn: bestMandi.expectedNetReturn,
+          trend: bestMandi.trend,
+          trendPercentage: bestMandi.trendPercentage,
+          sell_now_vs_wait: bestMandi.sell_now_vs_wait,
+          weatherRiskLevel: weatherRisk.riskLevel,
+          weatherRiskPercentage: weatherRisk.riskPercentage
+        });
+      }
+    } catch (historyErr) {
+      console.error("Failed to save Decision History:", historyErr.message);
+      // DO NOT fail the main request if DB history saving fails
+    }
+
+    // 7. Return structured JSON
     res.json({
       success: true,
       data: {

@@ -26,7 +26,13 @@ const getWeatherForecast = async (latitude, longitude) => {
   try {
     const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&appid=${API_KEY}&units=metric`;
     
-    const response = await fetch(url);
+    // Add a reasonable timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout
+
+    const response = await fetch(url, { signal: controller.signal });
+    
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       throw new Error(`OpenWeather API responded with status ${response.status}`);

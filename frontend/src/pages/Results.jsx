@@ -113,33 +113,80 @@ export default function Results() {
         )}
       </div>
 
-      {/* Image Quality layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {/* Image Analysis Section (Only rendered if actual image was uploaded and confirmed) */}
+      {(() => {
+        const rawImageData = sessionStorage.getItem('fasalnirnay_image_analysis');
+        if (!rawImageData) return null;
+        
+        try {
+          const imgData = JSON.parse(rawImageData);
+          if (!imgData || !imgData.imagePreview) return null;
 
-        <div className="card p-6">
-          <h3 className="text-xl font-bold mb-4">{t('results.cropImageAssessment')}</h3>
-          <div className="bg-surface-100 rounded-lg h-40 flex items-center justify-center mb-6 border-2 border-dashed border-surface-300">
-            <ImageIcon size={48} className="text-surface-400" />
-          </div>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center pb-2 border-b border-surface-100">
-              <span className="text-surface-600">{t('imageAnalysis.quality')}</span>
-              <span className="badge badge-primary">Good</span>
+          const getConfidenceText = (conf) => {
+            if (conf >= 0.85) return t('imageInput.confidenceHigh');
+            if (conf >= 0.65) return t('imageInput.confidenceMedium');
+            return t('imageInput.confidenceLow');
+          };
+
+          return (
+            <div className="card p-6 md:p-8 animate-fade-in border-2 border-primary-100">
+              <h3 className="text-2xl font-bold text-surface-900 mb-6 flex items-center gap-2">
+                <span>📷</span> {t('results.uploadedCropPhoto')}
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                <div className="w-full max-h-72 rounded-xl overflow-hidden shadow-md border-2 border-surface-200 bg-black flex items-center justify-center">
+                  <img 
+                    src={imgData.imagePreview} 
+                    alt="Uploaded crop" 
+                    className="w-full max-h-72 object-contain"
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  <div className="bg-surface-50 p-5 rounded-xl border border-surface-200 space-y-4">
+                    <div>
+                      <span className="text-sm text-surface-500 font-semibold uppercase tracking-wider block mb-1">
+                        🌱 {t('results.detectedCropLabel')}
+                      </span>
+                      <span className="text-3xl font-extrabold text-primary-700">
+                        {t(`crops.${imgData.cropId}`) || imgData.cropName || imgData.cropId}
+                      </span>
+                    </div>
+
+                    {imgData.varietyId && (
+                      <div className="pt-3 border-t border-surface-200">
+                        <span className="text-sm text-surface-500 font-semibold uppercase tracking-wider block mb-1">
+                          🌾 {t('results.detectedVarietyLabel')}
+                        </span>
+                        <span className="text-xl font-bold text-surface-800">
+                          {t(`varieties.${imgData.varietyId}`) || imgData.varietyName || imgData.varietyId}
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="pt-3 border-t border-surface-200">
+                      <span className="text-sm text-surface-500 font-semibold uppercase tracking-wider block mb-1">
+                        🎯 {t('results.confidenceLabel')}
+                      </span>
+                      <span className={`inline-block font-bold text-base px-3.5 py-1.5 rounded-full ${imgData.confidence >= 0.85 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                        {getConfidenceText(imgData.confidence)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-surface-500 leading-relaxed italic bg-blue-50/50 p-3 rounded-lg border border-blue-100">
+                    ℹ️ {t('results.imageDisclaimer')}
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="flex justify-between items-center pb-2 border-b border-surface-100">
-              <span className="text-surface-600">{t('imageAnalysis.disease')}</span>
-              <span className="font-medium">No significant issue detected</span>
-            </div>
-            <div className="flex justify-between items-center pb-2 border-b border-surface-100">
-              <span className="text-surface-600">{t('imageAnalysis.confidence')}</span>
-              <span className="badge badge-surface">Medium</span>
-            </div>
-          </div>
-          <p className="text-sm text-surface-400 mt-4 text-center">
-            {t('results.imageDisclaimer')}
-          </p>
-        </div>
-      </div>
+          );
+        } catch (e) {
+          console.error("Failed to parse image analysis session data:", e);
+          return null;
+        }
+      })()}
     </div>
   );
 }

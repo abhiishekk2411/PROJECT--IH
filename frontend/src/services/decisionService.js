@@ -1,43 +1,27 @@
 // ============================================================================
 // Decision Service — FasalNirnay Frontend
 // ============================================================================
-// Handles the core decision analysis: ranked mandis, sell now vs wait, weather.
-// Currently returns mock data. Replace with backend calls when ready.
+// Decision Service
+// ============================================================================
+// Communicates with the backend decision endpoints.
 // ============================================================================
 
 import { apiRequest } from './api';
 
-/**
- * Analyze crop and get the full decision recommendation.
- * Triggers the Decision Engine on the backend.
- * @param {Object} cropData - { crop, variety, quantity, unit, location }
- * @returns {Object} Full recommendation with ranked mandis, explanation, weather, etc.
- */
-export async function analyzeDecision(cropData) {
-  const payload = {
-    cropId: cropData.crop.toLowerCase(),
-    varietyId: cropData.variety.toLowerCase(),
-    quantityKg: Number(cropData.quantity),
-    location: cropData.location
-  };
-
-  const response = await apiRequest('/decision/analyze', {
+export const analyzeDecision = async (formData) => {
+  const result = await apiRequest('/decision/analyze', {
     method: 'POST',
-    body: JSON.stringify(payload)
+    body: JSON.stringify({
+      cropId: formData.crop?.toLowerCase() || formData.cropId,
+      varietyId: formData.variety?.toLowerCase() || formData.varietyId,
+      quantityKg: Number(formData.quantity) || formData.quantityKg,
+      location: formData.location || formData.farmerLocation
+    })
   });
+  return result.data;
+};
 
-  return response.data;
-}
-
-/**
- * Get historical price trend for a specific market and crop.
- * @param {string} cropId
- * @param {string} mandiId
- * @param {string} varietyId
- * @param {number} days
- * @returns {Object} Trend data including priceHistory
- */
-export async function getMarketTrend(cropId, mandiId, varietyId, days = 30) {
+export const getMarketTrend = async (cropId, mandiId, varietyId, days = 30) => {
   const queryParams = new URLSearchParams({
     crop: cropId.toLowerCase(),
     mandi: mandiId.toLowerCase(),
@@ -50,6 +34,33 @@ export async function getMarketTrend(cropId, mandiId, varietyId, days = 30) {
   });
 
   return response.data;
-}
+};
 
+export const getDashboard = async () => {
+  const result = await apiRequest('/dashboard');
+  return result.data;
+};
 
+export const getHistory = async (limit = 20) => {
+  const result = await apiRequest(`/history?limit=${limit}`);
+  return result.data;
+};
+
+export const analyzeImage = async (file) => {
+  const formData = new FormData();
+  formData.append('image', file);
+
+  try {
+    const response = await fetch('http://localhost:5000/api/vision/analyze', {
+      method: 'POST',
+      body: formData,
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || 'Failed to analyze image');
+    }
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};

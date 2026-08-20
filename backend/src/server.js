@@ -6,6 +6,9 @@ const { errorHandler } = require('./middleware/errorHandler');
 
 const marketRoutes = require('./routes/marketRoutes');
 const decisionRoutes = require('./routes/decisionRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
+const historyRoutes = require('./routes/historyRoutes');
+const visionRoutes = require('./routes/visionRoutes');
 
 // Connect to MongoDB
 connectDB();
@@ -29,6 +32,9 @@ app.get('/api/health', (req, res) => {
 // Mount Routes
 app.use('/api/markets', marketRoutes);
 app.use('/api/decision', decisionRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/history', historyRoutes);
+app.use('/api/vision', visionRoutes);
 
 // Error Handler Middleware
 app.use(errorHandler);
