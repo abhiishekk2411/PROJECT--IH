@@ -8,6 +8,7 @@ const { getWeatherForecast } = require('../services/weather/weatherService');
 const { calculateWeatherRisk } = require('../services/weather/weatherRiskService');
 const MarketPrice = require('../models/MarketPrice');
 const DecisionHistory = require('../models/DecisionHistory');
+const mongoose = require('mongoose');
 
 // @desc    Analyze crop selling decision
 // @route   POST /api/decision/analyze
@@ -151,7 +152,26 @@ const analyzeDecision = async (req, res, next) => {
       // DO NOT fail the main request if DB history saving fails
     }
 
-    // 7. Return structured JSON
+    // 7. Find Buyer Matches (PS 26132 Extension)
+    let buyerMatches = [];
+    try {
+      const buyerService = require('../services/buyer/buyerService');
+      const buyerMatchingService = require('../services/buyer/buyerMatchingService');
+      
+      const allBuyers = await buyerService.getAllActiveBuyers();
+      buyerMatches = await buyerMatchingService.findMatches(
+        cropId, 
+        varietyId, 
+        quantityKg, 
+        { latitude: farmerCoords.latitude, longitude: farmerCoords.longitude }, 
+        allBuyers
+      );
+    } catch (buyerErr) {
+      console.error("Failed to fetch buyer matches:", buyerErr.message);
+      // DO NOT fail the main request if buyer lookup fails
+    }
+
+    // 8. Return structured JSON
     res.json({
       success: true,
       data: {
@@ -167,6 +187,7 @@ const analyzeDecision = async (req, res, next) => {
           riskPercentage: weatherRisk.riskPercentage,
           cropPerishability: weatherRisk.cropPerishability
         },
+        buyers: buyerMatches,
         ...decisionResult
       }
     });

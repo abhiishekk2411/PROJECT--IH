@@ -94,6 +94,7 @@ const getDashboardSummary = async (userId) => {
     latestMandi: latestAnalysis.selectedMandiName,
     latestNetReturn: latestAnalysis.expectedNetReturn,
     averageNetReturn,
+    totalBuyers: 3, // PS 26132 buyer integration
     recentAnalyses: history.slice(0, 5)
   };
 };

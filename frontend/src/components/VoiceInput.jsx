@@ -11,6 +11,16 @@ const VoiceInput = ({ onVoiceSuccess }) => {
   const [errorMsg, setErrorMsg] = useState('');
   const [parsedResult, setParsedResult] = useState(null);
 
+  const speakHindi = (text) => {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel(); // Clear any overlapping audio
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'hi-IN';
+    utterance.rate = 0.9;
+    utterance.pitch = 1.0;
+    window.speechSynthesis.speak(utterance);
+  };
+
   const recognitionRef = useRef(null);
   const isListeningRef = useRef(false);
   const transcriptRef = useRef('');
@@ -53,16 +63,24 @@ const VoiceInput = ({ onVoiceSuccess }) => {
       
       if (event.error === 'not-allowed' || event.error === 'permission-denied') {
         setStatus('permissionDenied');
-        setErrorMsg('माइक्रोफ़ोन की अनुमति नहीं मिली। कृपया Chrome में माइक्रोफ़ोन की अनुमति दें।');
+        const msg = 'माइक्रोफ़ोन की अनुमति नहीं मिली। कृपया Chrome में माइक्रोफ़ोन की अनुमति दें।';
+        setErrorMsg(msg);
+        speakHindi(msg);
       } else if (event.error === 'no-speech') {
         setStatus('error');
-        setErrorMsg('आवाज़ सुनाई नहीं दी। कृपया फिर से बोलें।');
+        const msg = 'आवाज़ सुनाई नहीं दी। कृपया फिर से बोलें।';
+        setErrorMsg(msg);
+        speakHindi(msg);
       } else if (event.error === 'network') {
         setStatus('error');
-        setErrorMsg('आवाज़ पहचानने की सेवा से कनेक्शन नहीं हो पाया। कृपया फिर कोशिश करें।');
+        const msg = 'आवाज़ पहचानने की सेवा से कनेक्शन नहीं हो पाया। कृपया फिर कोशिश करें।';
+        setErrorMsg(msg);
+        speakHindi(msg);
       } else {
         setStatus('error');
-        setErrorMsg('आवाज़ समझ नहीं आई। कृपया दोबारा कोशिश करें।');
+        const msg = 'आवाज़ समझ नहीं आई। कृपया दोबारा कोशिश करें।';
+        setErrorMsg(msg);
+        speakHindi(msg);
       }
     };
 
@@ -206,25 +224,33 @@ const VoiceInput = ({ onVoiceSuccess }) => {
 
     if (!crop && !quantity && !location) {
       setStatus('error');
-      setErrorMsg('आपकी बात समझ नहीं आई। कृपया फसल, मात्रा और शहर का नाम साफ़ बोलें।');
+      const msg = 'आपकी बात समझ नहीं आई। कृपया फसल, मात्रा और शहर का नाम साफ़ बोलें।';
+      setErrorMsg(msg);
+      speakHindi(msg);
       return;
     }
 
     if (!crop) {
       setStatus('error');
-      setErrorMsg('फसल समझ नहीं आई। कृपया फसल का नाम बोलें, जैसे: "टमाटर"');
+      const msg = 'फसल समझ नहीं आई। कृपया फसल का नाम बोलें, जैसे: "टमाटर"';
+      setErrorMsg(msg);
+      speakHindi(msg);
       return;
     }
 
     if (!quantity) {
       setStatus('error');
-      setErrorMsg('मात्रा समझ नहीं आई। कृपया मात्रा बोलें, जैसे: "800 किलो"');
+      const msg = 'मात्रा समझ नहीं आई। कृपया मात्रा बोलें, जैसे: "800 किलो"';
+      setErrorMsg(msg);
+      speakHindi(msg);
       return;
     }
 
     if (!location) {
       setStatus('error');
-      setErrorMsg('स्थान समझ नहीं आया। कृपया शहर का नाम बोलें, जैसे: "नासिक"');
+      const msg = 'स्थान समझ नहीं आया। कृपया शहर का नाम बोलें, जैसे: "नासिक"';
+      setErrorMsg(msg);
+      speakHindi(msg);
       return;
     }
 
@@ -232,11 +258,20 @@ const VoiceInput = ({ onVoiceSuccess }) => {
     setParsedResult(detected);
     setStatus('success');
 
+    // Convert internal crop values back to Hindi for speech
+    const cropNamesInHindi = {
+      'tomato': 'टमाटर', 'onion': 'प्याज', 'potato': 'आलू',
+      'wheat': 'गेहूँ', 'rice': 'धान', 'cotton': 'कपास',
+      'soybean': 'सोयाबीन', 'maize': 'मक्का'
+    };
+    const speechCrop = cropNamesInHindi[crop] || crop;
+    speakHindi(`आपकी जानकारी मिल गई है। फसल: ${speechCrop}, मात्रा: ${quantity} किलो, स्थान: ${location}`);
+
     setTimeout(() => {
       if (onVoiceSuccess) {
         onVoiceSuccess(detected);
       }
-    }, 1500);
+    }, 2500);
   };
 
   const handleToggle = () => {

@@ -118,6 +118,20 @@ export default function Dashboard() {
 
             {/* Right column */}
             <div className="space-y-8">
+              {/* Buyer Stats (PS 26132) */}
+              <div className="card p-6 border-2 border-primary-50 bg-surface-50">
+                <h3 className="text-xl font-bold mb-2 flex items-center gap-2 text-surface-900">
+                  <span>🛒</span> अभी उपलब्ध खरीदार
+                </h3>
+                <p className="text-surface-600 mb-4 text-sm">
+                  सिस्टम में आपकी फसलों के लिए संभावित खरीदारों की मांग।
+                </p>
+                <div className="flex items-center justify-between bg-white p-4 rounded-xl border border-surface-200">
+                  <div className="text-surface-500 font-semibold">कुल खरीदार:</div>
+                  <div className="text-3xl font-extrabold text-primary-700">{data.totalBuyers || 3}</div>
+                </div>
+              </div>
+
               <div className="card p-6">
                 <h3 className="text-xl font-bold mb-4">{t('dashboard.quickActions')}</h3>
                 <div className="flex flex-col gap-3">

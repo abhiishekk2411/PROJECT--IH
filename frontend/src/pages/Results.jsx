@@ -89,6 +89,64 @@ export default function Results() {
         <MandiComparison mandis={decision.rankedMandis} bestMandiId={bestMandiId} />
       </div>
 
+      {/* Potential Buyers (PS 26132 Extension) */}
+      <div className="card p-6 md:p-8 border-2 border-primary-50">
+        <h3 className="text-2xl font-bold text-surface-900 mb-2 flex items-center gap-2">
+          <span>🛒</span> आपकी फसल में रुचि रखने वाले खरीदार
+        </h3>
+        <p className="text-surface-600 mb-6">
+          आपकी फसल (मात्रा और किस्म) के आधार पर संभावित खरीदार। यह भाव सीधे खरीदार द्वारा प्रस्तावित है।
+        </p>
+
+        {decision.buyers && decision.buyers.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {decision.buyers.map((buyer, idx) => (
+              <div key={idx} className="border border-surface-200 rounded-xl p-5 bg-surface-50 shadow-sm relative overflow-hidden">
+                {buyer.isDemo && (
+                  <div className="absolute top-0 right-0 bg-yellow-100 text-yellow-800 text-xs font-bold px-3 py-1 rounded-bl-lg">
+                    डेमो खरीदार
+                  </div>
+                )}
+                <h4 className="text-xl font-bold text-surface-900 mb-1">{buyer.buyerName}</h4>
+                <div className="flex items-center gap-1 text-sm font-medium text-primary-700 mb-4">
+                  <MapPin size={16} /> {buyer.buyerLocation} ({Math.round(buyer.distanceKm)} km)
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="bg-white p-3 rounded-lg border border-surface-200">
+                    <div className="text-surface-500 font-semibold mb-1">आवश्यकता</div>
+                    <div className="font-bold text-surface-900">{buyer.quantityRequiredKg} किलो</div>
+                  </div>
+                  <div className="bg-white p-3 rounded-lg border border-surface-200">
+                    <div className="text-surface-500 font-semibold mb-1">प्रस्तावित भाव</div>
+                    <div className="font-bold text-green-700 flex items-center gap-1">
+                      <IndianRupee size={14}/> {buyer.offerPrice} /kg
+                    </div>
+                  </div>
+                  <div className="bg-white p-3 rounded-lg border border-surface-200 col-span-2">
+                    <div className="text-surface-500 font-semibold mb-1">गुणवत्ता (Quality)</div>
+                    <div className="font-bold text-surface-900">{buyer.qualityGrade}</div>
+                  </div>
+                </div>
+
+                <div className="mt-4 pt-4 border-t border-surface-200 flex items-center justify-between">
+                  <div className="text-xs text-surface-500 font-medium bg-blue-50 text-blue-700 px-2 py-1 rounded">
+                    ✓ फसल और किस्म मेल खाती है
+                  </div>
+                  <button className="btn btn-primary text-sm px-4 py-2">
+                    संपर्क करें
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-surface-50 p-6 rounded-xl text-center text-surface-600 border border-surface-200 font-medium">
+            अभी इस फसल के लिए कोई उपयुक्त खरीदार नहीं मिला।
+          </div>
+        )}
+      </div>
+
       {/* Trend Section */}
       <div className="card p-6 md:p-8">
         <h3 className="text-2xl font-bold text-surface-900 mb-6">{t('ux.trendPastDays')}</h3>
